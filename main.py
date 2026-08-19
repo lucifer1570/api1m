@@ -10,9 +10,12 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-UPSTREAM_URL = os.getenv(
-    "WINGO_UPSTREAM_URL",
-    "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json",
+DEFAULT_UPSTREAM_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json"
+configured_upstream_url = os.getenv("WINGO_UPSTREAM_URL", "").strip()
+UPSTREAM_URL = (
+    DEFAULT_UPSTREAM_URL
+    if not configured_upstream_url or "your-authorized-source.example" in configured_upstream_url
+    else configured_upstream_url
 )
 REFRESH_SECONDS = float(os.getenv("REFRESH_SECONDS", "5"))
 MAX_RESULTS = 500
