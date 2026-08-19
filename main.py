@@ -73,27 +73,29 @@ async def refresh_cache() -> int:
     global cache, cache_updated_at, last_error
     try:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, headers=UPSTREAM_HEADERS) as client:
-            fetched_records: dict[str, dict[str, Any]] = {}
-            for page in range(1, (MAX_RESULTS // UPSTREAM_PAGE_SIZE) + 1):
-                params = None if page == 1 else {"pageNo": page, "pageSize": UPSTREAM_PAGE_SIZE}
-                response = await client.get(
-                    UPSTREAM_URL,
-                    params=params,
-                )
-                response.raise_for_status()
-                payload = response.json()
-                page_records = [
-                    item
-                    for record in _records_from_payload(payload)
-                    if (item := _normalize_record(record)) is not None
-                ]
-                previous_count = len(fetched_records)
-                for item in page_records:
-                    fetched_records.setdefault(item["issueNumber"], item)
-                if len(fetched_records) >= MAX_RESULTS or len(fetched_records) == previous_count:
+            normalized: list[dict[str, Any]] = []
+            source_urls = list(dict.fromkeys((UPSTREAM_URL, DEFAULT_UPSTREAM_URL)))
+            for source_url in source_urls:
+                fetched_records: dict[str, dict[str, Any]] = {}
+                for page in range(1, (MAX_RESULTS // UPSTREAM_PAGE_SIZE) + 1):
+                    params = None if page == 1 else {"pageNo": page, "pageSize": UPSTREAM_PAGE_SIZE}
+                    response = await client.get(source_url, params=params)
+                    response.raise_for_status()
+                    payload = response.json()
+                    page_records = [
+                        item
+                        for record in _records_from_payload(payload)
+                        if (item := _normalize_record(record)) is not None
+                    ]
+                    previous_count = len(fetched_records)
+                    for item in page_records:
+                        fetched_records.setdefault(item["issueNumber"], item)
+                    if len(fetched_records) >= MAX_RESULTS or len(fetched_records) == previous_count:
+                        break
+                normalized = list(fetched_records.values())[:MAX_RESULTS]
+                if normalized:
                     break
 
-        normalized = list(fetched_records.values())[:MAX_RESULTS]
         if not normalized:
             raise ValueError("upstream response contained no recognizable WinGo records")
         merged_records: dict[str, dict[str, Any]] = {}
