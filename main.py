@@ -72,9 +72,10 @@ async def refresh_cache() -> int:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, headers=UPSTREAM_HEADERS) as client:
             fetched_records: dict[str, dict[str, Any]] = {}
             for page in range(1, (MAX_RESULTS // UPSTREAM_PAGE_SIZE) + 1):
+                params = None if page == 1 else {"pageNo": page, "pageSize": UPSTREAM_PAGE_SIZE}
                 response = await client.get(
                     UPSTREAM_URL,
-                    params={"pageNo": page, "pageSize": UPSTREAM_PAGE_SIZE},
+                    params=params,
                 )
                 response.raise_for_status()
                 payload = response.json()
