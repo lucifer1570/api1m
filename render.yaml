@@ -9,3 +9,5 @@ services:
         value: "3.12.0"
       - key: REFRESH_SECONDS
         value: "5"
+      - key: WINGO_UPSTREAM_URL
+        value: "https://api-wingo1min.randorona.workers.dev/"

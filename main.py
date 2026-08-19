@@ -10,7 +10,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-DEFAULT_UPSTREAM_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json"
+DEFAULT_UPSTREAM_URL = "https://api-wingo1min.randorona.workers.dev/"
 configured_upstream_url = os.getenv("WINGO_UPSTREAM_URL", "").strip()
 UPSTREAM_URL = (
     DEFAULT_UPSTREAM_URL
@@ -46,7 +46,7 @@ def _records_from_payload(payload: Any) -> list[dict[str, Any]]:
     if not isinstance(payload, dict):
         return []
 
-    for key in ("data", "list", "records", "result", "rows"):
+    for key in ("data", "DATA", "list", "LIST", "records", "result", "rows"):
         value = payload.get(key)
         records = _records_from_payload(value)
         if records:
@@ -78,7 +78,7 @@ async def refresh_cache() -> int:
     try:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, headers=UPSTREAM_HEADERS) as client:
             normalized: list[dict[str, Any]] = []
-            source_urls = list(dict.fromkeys((UPSTREAM_URL, DEFAULT_UPSTREAM_URL)))
+            source_urls = list(dict.fromkeys((DEFAULT_UPSTREAM_URL, UPSTREAM_URL)))
             for source_url in source_urls:
                 fetched_records: dict[str, dict[str, Any]] = {}
                 for page in range(1, (MAX_RESULTS // UPSTREAM_PAGE_SIZE) + 1):
