@@ -18,6 +18,7 @@ UPSTREAM_URL = (
         not configured_upstream_url
         or "your-authorized-source.example" in configured_upstream_url
         or "wingo-1m-api.onrender.com" in configured_upstream_url
+        or "draw.ar-lottery01.com" in configured_upstream_url
     )
     else configured_upstream_url
 )
@@ -42,16 +43,18 @@ last_error: str | None = None
 
 def _records_from_payload(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, list):
-        return [item for item in payload if isinstance(item, dict)]
+        records: list[dict[str, Any]] = []
+        for item in payload:
+            records.extend(_records_from_payload(item))
+        return records
     if not isinstance(payload, dict):
         return []
-
-    for key in ("data", "DATA", "list", "LIST", "records", "result", "rows"):
-        value = payload.get(key)
-        records = _records_from_payload(value)
-        if records:
-            return records
-    return []
+    if "issueNumber" in payload and ("number" in payload or "result" in payload):
+        return [payload]
+    records = []
+    for value in payload.values():
+        records.extend(_records_from_payload(value))
+    return records
 
 
 def _first_value(record: dict[str, Any], keys: tuple[str, ...]) -> Any:
@@ -78,7 +81,7 @@ async def refresh_cache() -> int:
     try:
         async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, headers=UPSTREAM_HEADERS) as client:
             normalized: list[dict[str, Any]] = []
-            source_urls = list(dict.fromkeys((DEFAULT_UPSTREAM_URL, UPSTREAM_URL)))
+            source_urls = [UPSTREAM_URL]
             for source_url in source_urls:
                 fetched_records: dict[str, dict[str, Any]] = {}
                 for page in range(1, (MAX_RESULTS // UPSTREAM_PAGE_SIZE) + 1):
