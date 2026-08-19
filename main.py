@@ -134,6 +134,21 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root() -> dict[str, Any]:
+    return {
+        "success": True,
+        "service": "WinGo 1M API",
+        "status": "online",
+        "endpoints": {
+            "health": "/health",
+            "results": "/api/wingo/1m",
+            "latest": "/api/wingo/1m/latest",
+            "docs": "/docs",
+        },
+    }
+
+
 @app.get("/health")
 async def health() -> dict[str, Any]:
     return {
