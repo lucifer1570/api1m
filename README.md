@@ -2,7 +2,7 @@
 
 A small FastAPI service that periodically retrieves the public WinGo 1-minute history endpoint, normalizes the records, and serves them from an in-memory cache.
 
-Each refresh requests up to five upstream pages of 100 records, removes duplicate issue numbers, and builds a 500-record cache. Newly fetched records are placed first; older records are preserved until the cache reaches 500 results.
+Each refresh requests upstream pages, removes duplicate issue numbers, and builds a cache of up to 500 verified records. Newly fetched records are placed first; older records are preserved until the cache reaches 500 results. The upstream currently may return only 10 records even when its metadata reports 500 total records; the API does not invent missing records.
 
 ## Run locally
 

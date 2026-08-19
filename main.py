@@ -18,6 +18,12 @@ REFRESH_SECONDS = float(os.getenv("REFRESH_SECONDS", "5"))
 MAX_RESULTS = 500
 UPSTREAM_PAGE_SIZE = 100
 REQUEST_TIMEOUT = float(os.getenv("REQUEST_TIMEOUT", "10"))
+UPSTREAM_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://draw.ar-lottery01.com/",
+    "Origin": "https://draw.ar-lottery01.com",
+}
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger("wingo-api")
@@ -63,7 +69,7 @@ def _normalize_record(record: dict[str, Any]) -> dict[str, Any] | None:
 async def refresh_cache() -> int:
     global cache, cache_updated_at, last_error
     try:
-        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT, headers=UPSTREAM_HEADERS) as client:
             fetched_records: dict[str, dict[str, Any]] = {}
             for page in range(1, (MAX_RESULTS // UPSTREAM_PAGE_SIZE) + 1):
                 response = await client.get(
